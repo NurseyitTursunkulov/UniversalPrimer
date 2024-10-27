@@ -1,8 +1,13 @@
 from pydantic import BaseModel
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends, HTTPException, status
+
+from auth import create_access_token
 from database import engine, Base, database
+from fastapi.security import OAuth2PasswordRequestForm
 import models
+import userDb
 import httpx
+import auth
 
 app = FastAPI()
 Base.metadata.create_all(bind=engine)
@@ -18,9 +23,26 @@ async def shutdown():
     await database.disconnect()
 
 
-# @app.get("/items/{item_id}")
-# async def read_item(item_id: int):
-#     return {"item_id": item_id}
+@app.post("/token")
+async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
+    user = userDb.authenticate_user(userDb.fake_users_db, form_data.username, form_data.password)
+    print()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="invalid credentials",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+    access_token = create_access_token(data={"sub": user["username"]})
+    return {"access_token": access_token, "token_type": "bearer"}
+
+
+@app.get("/user/me")
+async def read_users_me(token: str = Depends(userDb.oauth2_scheme)):
+    user = auth.verify_token(token)
+    if user is None:
+        raise HTTPException(status_code=401, detail="invalid token")
+    return {"username": user["sub"]}
 
 
 @app.get("/external-data/")
@@ -62,21 +84,23 @@ async def read_item(item_id: int):
 
 
 class ItemUpdate(BaseModel):
-    name:str = None
-    description :str = None
-    price : float = None
-    tax:float = None
+    name: str = None
+    description: str = None
+    price: float = None
+    tax: float = None
+
 
 @app.put("/items/{item_id}")
-async def update_item(item_id:int,item:ItemUpdate):
-    query = models.Item.__table__.update().where(models.Item.id==item_id).values(
-        name=item.name,description = item.description, price=item.price, tax = item.tax
+async def update_item(item_id: int, item: ItemUpdate):
+    query = models.Item.__table__.update().where(models.Item.id == item_id).values(
+        name=item.name, description=item.description, price=item.price, tax=item.tax
     )
     itemres = await database.execute(query)
-    return {"message":"Item updated succesfuly" + str(itemres)}
+    return {"message": "Item updated succesfuly" + str(itemres)}
+
 
 @app.delete("/items/{item_id}")
-async def deleteItem(item_id:int):
+async def deleteItem(item_id: int):
     query = models.Item.__table__.delete().where(models.Item.id == item_id)
     await database.execute(query)
-    return {"message":"item deleted successfuly"}
+    return {"message": "item deleted successfuly"}
