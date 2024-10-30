@@ -8,8 +8,10 @@ import models
 import userDb
 import httpx
 import auth
+from auth import router
 
 app = FastAPI()
+app.include_router(router, prefix="/auth", tags=["auth"])
 Base.metadata.create_all(bind=engine)
 
 
