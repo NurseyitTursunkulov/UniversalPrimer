@@ -21,6 +21,12 @@ def get_user(db, username: str):
     return None
 
 
+def get_user_by_mail(db, email):
+    for user_data in db.values():
+        if user_data["email"] == email:
+            return user_data
+        return None
+
 def authenticate_user(db, username: str, password: str):
     user = get_user(db, username)
     if not user:
