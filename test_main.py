@@ -12,3 +12,9 @@ def test_login_and_get_user():
     response = client.get("/user/me",headers=headers)
     assert response.status_code == 200
     assert response.json()["username"]=="john"
+
+def test_register():
+    respone = client.post("/auth/register",json={"username":"testuser", "email": "testuser@example.com", "password": "testpass"})
+    assert respone.status_code == 200
+    assert respone.json() == {"message":"user created successfuly"}
+
