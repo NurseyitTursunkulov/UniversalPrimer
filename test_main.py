@@ -3,18 +3,29 @@ from main import app
 
 client = TestClient(app)
 
+
 def test_login_and_get_user():
-    response = client.post("/token",data={"username" : "john","password":"secret"})
+    response = client.post("/token", data={"username": "john", "password": "secret"})
     assert response.status_code == 200
     token = response.json()["access_token"]
 
-    headers = {"Authorization":f"Bearer {token}"}
-    response = client.get("/user/me",headers=headers)
+    headers = {"Authorization": f"Bearer {token}"}
+    response = client.get("/user/me", headers=headers)
     assert response.status_code == 200
-    assert response.json()["username"]=="john"
+    assert response.json()["username"] == "john"
+
 
 def test_register():
-    respone = client.post("/auth/register",json={"username":"testuser", "email": "testuser@example.com", "password": "testpass"})
+    respone = client.post("/auth/register",
+                          json={"username": "testuser", "email": "testuser@example.com", "password": "testpass"})
     assert respone.status_code == 200
-    assert respone.json() == {"message":"user created successfuly"}
+    assert respone.json() == {"message": "user created successfuly"}
 
+
+def test_login():
+    response = client.post("/auth/token", data={"username": "john", "password": "secret"})
+    assert response.status_code == 200
+    token = response.json()["access_token"]
+    assert isinstance(token, str)
+    assert len(token) > 0  # Check if token has some length
+    print(token)
