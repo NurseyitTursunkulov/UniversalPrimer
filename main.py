@@ -85,17 +85,11 @@ class ItemCreate(BaseModel):
     name: str
     description: str = None
     price: float
-
-
-class Item(BaseModel):
-    name: str
-    price: float
-    desc: str = None
-    tax: float = 0.0
+    tax :float = 0.0
 
 
 @app.post("/items/")
-async def create_item(item: Item):
+async def create_item(item: ItemCreate):
     query = models.Item.__table__.insert().values(
         name=item.name, description=item.desc, price=item.price, tax=item.tax
     )
@@ -131,3 +125,12 @@ async def deleteItem(item_id: int):
     query = models.Item.__table__.delete().where(models.Item.id == item_id)
     await database.execute(query)
     return {"message": "item deleted successfuly"}
+
+def send_welcome_mail(email:str):
+    print(f"sending welcome mail")
+
+from fastapi import BackgroundTasks
+@app.post("/register/")
+async def register_user(email:str,background_task:BackgroundTasks):
+    background_task.add_task(send_welcome_mail(email))
+    return {"message":"User registered. Welcome email will be sent."}

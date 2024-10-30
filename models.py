@@ -16,9 +16,6 @@ class Item(Base):
     tax = Column(Float, default=0.0)
 
 
-Base = declarative_base()
-
-
 class UserCreate(BaseModel):
     username: str
     email: str
