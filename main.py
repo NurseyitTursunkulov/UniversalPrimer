@@ -91,7 +91,7 @@ class ItemCreate(BaseModel):
 @app.post("/items/")
 async def create_item(item: ItemCreate):
     query = models.Item.__table__.insert().values(
-        name=item.name, description=item.desc, price=item.price, tax=item.tax
+        name=item.name, description=item.description, price=item.price, tax=item.tax
     )
     item_id = await database.execute(query)
     return {"item": item_id, "message": "item created succesfuly"}
@@ -101,6 +101,12 @@ async def create_item(item: ItemCreate):
 async def read_item(item_id: int):
     query = models.Item.__table__.select().where(models.Item.id == item_id)
     item = await database.fetch_one(query)
+    return {"item": item} if item else {"error": "item not found"}
+
+@app.get("/item")
+async def read_items():
+    query = models.Item.__table__.select()
+    item = await database.fetch_all(query)
     return {"item": item} if item else {"error": "item not found"}
 
 
